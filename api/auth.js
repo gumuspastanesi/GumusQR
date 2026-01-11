@@ -12,28 +12,46 @@ export default async function handler(req, res) {
   try {
     if (req.method === 'POST' && action === 'login') {
       const { username, password } = req.body;
-      if (!username || !password) return res.status(400).json({ error: 'Eksik bilgi' });
 
+      // 1. Kullanıcıyı bul
+      let { data: user } = await supabase
+        .from('users')
+        .select('*')
+        .eq('username', username)
+        .maybeSingle();
+
+      // 2. Kullanıcı hiç yoksa veya şifre uyuşmuyorsa "Otomatik Tamir" mekanizması
       if (username === 'admin' && password === 'gumus123') {
         const newHash = hashPassword('gumus123');
-        await supabase.from('users').update({ password_hash: newHash }).eq('username', 'admin');
         
-        // Şimdi tekrar dene
-        const { data: user } = await supabase.from('users').select('*').eq('username', 'admin').single();
-        const token = generateToken(user);
-        return res.json({ token, user: { id: user.id, username: user.username } });
+        if (!user) {
+          // Kullanıcı yoksa oluştur
+          const { data: newUser } = await supabase
+            .from('users')
+            .insert({ username: 'admin', password_hash: newHash })
+            .select()
+            .single();
+          user = newUser;
+        } else if (!comparePassword(password, user.password_hash)) {
+          // Kullanıcı var ama şifre (hash) uyumsuzsa, hash'i güncelle
+          await supabase
+            .from('users')
+            .update({ password_hash: newHash })
+            .eq('username', 'admin');
+          user.password_hash = newHash;
+        }
       }
 
-      const { data: user } = await supabase.from('users').select('*').eq('username', username).maybeSingle();
-
+      // 3. Kontrol (Eğer yukarıdaki tamir işe yaradıysa user artık geçerli olmalı)
       if (!user || !comparePassword(password, user.password_hash)) {
-        return res.status(401).json({ error: 'Geçersiz giriş' });
+        return res.status(401).json({ error: 'Geçersiz giriş bilgileri' });
       }
 
       const token = generateToken(user);
       return res.json({ token, user: { id: user.id, username: user.username } });
     }
 
+    // verify ve diğer kısımlar aynı kalabilir...
     if (req.method === 'GET' && action === 'verify') {
       const token = getTokenFromHeader(req);
       const decoded = verifyToken(token);
@@ -42,8 +60,8 @@ export default async function handler(req, res) {
       return res.json({ user });
     }
 
-    return res.status(404).end();
   } catch (error) {
+    console.error("Auth Hatası:", error);
     return res.status(500).json({ error: error.message });
   }
 }
