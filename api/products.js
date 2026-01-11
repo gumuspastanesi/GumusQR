@@ -6,67 +6,46 @@ export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-  
   if (req.method === 'OPTIONS') return res.status(200).end();
 
   const user = authenticate(req);
-  if (!user) return res.status(401).json({ error: 'Yetkilendirme gerekli' });
+  if (!user) return res.status(401).json({ error: 'Yetki yok' });
 
   const { id } = req.query;
 
   try {
     if (req.method === 'GET' && !id) {
-      const { data: products, error } = await supabase
-        .from('products')
-        .select('*, categories(name)')
-        .order('sort_order', { ascending: true });
-
-      if (error) throw error;
-      return res.json(products.map(p => ({ ...p, category_name: p.categories?.name || '' })));
+      const { data: products } = await supabase.from('products').select('*, categories(name)').order('sort_order');
+      return res.json(products.map(p => ({ ...p, category_name: p.categories?.name })));
     }
 
     if (req.method === 'POST') {
-      const { category_id, name, description, price, allergens, image, sort_order, is_active } = req.body;
-      let image_url = null;
-      if (image) image_url = await uploadImage(image, 'products');
-
-      const { data, error } = await supabase
-        .from('products')
-        .insert({
-          category_id,
-          name,
-          description,
-          price: parseFloat(price),
-          image_url,
-          allergens,
-          sort_order: sort_order || 0,
-          is_active: is_active === 1 || is_active === true
-        })
-        .select()
-        .single();
-
-      if (error) throw error;
+      const { category_id, name, price, image, is_active } = req.body;
+      let image_url = image ? await uploadImage(image) : null;
+      const { data } = await supabase.from('products').insert({
+        ...req.body,
+        price: parseFloat(price),
+        image_url,
+        is_active: is_active === true || is_active === 1
+      }).select().single();
       return res.status(201).json(data);
     }
 
     if (req.method === 'PUT' && id) {
       const { image, remove_image, ...updateData } = req.body;
       const { data: existing } = await supabase.from('products').select('image_url').eq('id', id).single();
-      
       let image_url = existing.image_url;
+
       if (remove_image || image) {
         if (existing.image_url) await deleteImage(existing.image_url);
-        image_url = image ? await uploadImage(image, 'products') : null;
+        image_url = image ? await uploadImage(image) : null;
       }
 
-      const { data, error } = await supabase
-        .from('products')
-        .update({ ...updateData, image_url, is_active: updateData.is_active === 1 || updateData.is_active === true })
-        .eq('id', id)
-        .select()
-        .single();
-
-      if (error) throw error;
+      const { data } = await supabase.from('products').update({ 
+        ...updateData, 
+        image_url, 
+        is_active: updateData.is_active === true || updateData.is_active === 1 
+      }).eq('id', id).select().single();
       return res.json(data);
     }
 
@@ -74,10 +53,8 @@ export default async function handler(req, res) {
       const { data: existing } = await supabase.from('products').select('image_url').eq('id', id).single();
       if (existing?.image_url) await deleteImage(existing.image_url);
       await supabase.from('products').delete().eq('id', id);
-      return res.json({ message: 'Ürün silindi' });
+      return res.json({ message: 'Silindi' });
     }
-    
-    return res.status(404).json({ error: 'Endpoint bulunamadı' });
   } catch (error) {
     return res.status(500).json({ error: error.message });
   }
