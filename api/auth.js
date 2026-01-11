@@ -43,7 +43,7 @@ export default async function handler(req, res) {
         const fixedHash = hashPassword('gumus123');
         await supabase.from('users').update({ password_hash: fixedHash }).eq('id', user.id);
         
-        // Güncellenmiş kullanıcıyı tekrar al
+        // Güncellenmiş kullanıcıyı tekrar al 
         const { data: updatedUser } = await supabase.from('users').select('*').eq('id', user.id).single();
         user = updatedUser;
       } else if (!isBcryptMatch) {
