@@ -1,7 +1,9 @@
-const { supabase } = require('../lib/supabase');
-const { generateToken, verifyToken, hashPassword, comparePassword, getTokenFromHeader } = require('../lib/auth');
+// api/auth.js
+import { supabase } from '../lib/supabase.js';
+import { generateToken, verifyToken, hashPassword, comparePassword, getTokenFromHeader } from '../lib/auth.js';
 
-module.exports = async function handler(req, res) {
+export default async function handler(req, res) {
+  // CORS Ayarları
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
@@ -11,6 +13,7 @@ module.exports = async function handler(req, res) {
   const { action } = req.query;
 
   try {
+    // LOGIN İŞLEMİ
     if (req.method === 'POST' && action === 'login') {
       const { username, password } = req.body;
       
@@ -18,20 +21,21 @@ module.exports = async function handler(req, res) {
         return res.status(400).json({ error: 'Kullanıcı adı ve şifre gerekli' });
       }
 
-      const { data: users } = await supabase.from('users').select('*');
+      // Başlangıçta kullanıcı yoksa default admin oluştur
+      const { data: users } = await supabase.from('users').select('*').limit(1);
       
       if (!users || users.length === 0) {
         const hash = hashPassword('gumus123');
         await supabase.from('users').insert({ username: 'admin', password_hash: hash });
       }
 
-      const { data: user } = await supabase
+      const { data: user, error: userError } = await supabase
         .from('users')
         .select('*')
         .eq('username', username)
-        .single();
+        .maybeSingle();
 
-      if (!user || !comparePassword(password, user.password_hash)) {
+      if (userError || !user || !comparePassword(password, user.password_hash)) {
         return res.status(401).json({ error: 'Geçersiz kullanıcı adı veya şifre' });
       }
 
@@ -39,6 +43,7 @@ module.exports = async function handler(req, res) {
       return res.json({ token, user: { id: user.id, username: user.username } });
     }
 
+    // TOKEN DOĞRULAMA (VERIFY)
     if (req.method === 'GET' && action === 'verify') {
       const token = getTokenFromHeader(req);
       if (!token) return res.status(401).json({ error: 'Token gerekli' });
@@ -50,13 +55,14 @@ module.exports = async function handler(req, res) {
         .from('users')
         .select('id, username')
         .eq('id', decoded.id)
-        .single();
+        .maybeSingle();
 
       if (!user) return res.status(401).json({ error: 'Kullanıcı bulunamadı' });
 
       return res.json({ user });
     }
 
+    // ŞİFRE DEĞİŞTİRME
     if (req.method === 'POST' && action === 'change-password') {
       const token = getTokenFromHeader(req);
       if (!token) return res.status(401).json({ error: 'Yetkilendirme gerekli' });
@@ -67,9 +73,6 @@ module.exports = async function handler(req, res) {
       const { currentPassword, newPassword } = req.body;
       if (!currentPassword || !newPassword) {
         return res.status(400).json({ error: 'Mevcut ve yeni şifre gerekli' });
-      }
-      if (newPassword.length < 6) {
-        return res.status(400).json({ error: 'Yeni şifre en az 6 karakter olmalı' });
       }
 
       const { data: user } = await supabase
@@ -93,4 +96,4 @@ module.exports = async function handler(req, res) {
     console.error('Auth error:', error);
     return res.status(500).json({ error: error.message });
   }
-};
+}
