@@ -1,5 +1,5 @@
-const { supabase } = require('./lib/supabase');
-const { authenticate } = require('./lib/auth');
+const { supabase } = require('../lib/supabase');
+const { authenticate } = require('../lib/auth');
 
 module.exports = async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -14,7 +14,6 @@ module.exports = async function handler(req, res) {
   const { id } = req.query;
 
   try {
-    // GET all
     if (req.method === 'GET' && !id) {
       const { data: categories, error } = await supabase
         .from('categories')
@@ -33,7 +32,6 @@ module.exports = async function handler(req, res) {
       return res.json(result);
     }
 
-    // GET single
     if (req.method === 'GET' && id) {
       const { data, error } = await supabase
         .from('categories')
@@ -45,7 +43,6 @@ module.exports = async function handler(req, res) {
       return res.json(data);
     }
 
-    // POST
     if (req.method === 'POST') {
       const { name, description, sort_order, is_active } = req.body;
       if (!name) return res.status(400).json({ error: 'Kategori adı gerekli' });
@@ -65,7 +62,6 @@ module.exports = async function handler(req, res) {
       return res.status(201).json(data);
     }
 
-    // PUT
     if (req.method === 'PUT' && id) {
       const { name, description, sort_order, is_active } = req.body;
 
@@ -93,7 +89,6 @@ module.exports = async function handler(req, res) {
       return res.json(data);
     }
 
-    // DELETE
     if (req.method === 'DELETE' && id) {
       const { data: products } = await supabase
         .from('products')

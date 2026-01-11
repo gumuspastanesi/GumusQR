@@ -1,8 +1,7 @@
-const { supabase } = require('./lib/supabase');
-const { generateToken, verifyToken, hashPassword, comparePassword, getTokenFromHeader } = require('./lib/auth');
+const { supabase } = require('../lib/supabase');
+const { generateToken, verifyToken, hashPassword, comparePassword, getTokenFromHeader } = require('../lib/auth');
 
 module.exports = async function handler(req, res) {
-  // CORS
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
@@ -12,7 +11,6 @@ module.exports = async function handler(req, res) {
   const { action } = req.query;
 
   try {
-    // POST /api/auth?action=login
     if (req.method === 'POST' && action === 'login') {
       const { username, password } = req.body;
       
@@ -41,7 +39,6 @@ module.exports = async function handler(req, res) {
       return res.json({ token, user: { id: user.id, username: user.username } });
     }
 
-    // GET /api/auth?action=verify
     if (req.method === 'GET' && action === 'verify') {
       const token = getTokenFromHeader(req);
       if (!token) return res.status(401).json({ error: 'Token gerekli' });
@@ -60,7 +57,6 @@ module.exports = async function handler(req, res) {
       return res.json({ user });
     }
 
-    // POST /api/auth?action=change-password
     if (req.method === 'POST' && action === 'change-password') {
       const token = getTokenFromHeader(req);
       if (!token) return res.status(401).json({ error: 'Yetkilendirme gerekli' });

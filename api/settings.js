@@ -1,6 +1,6 @@
-const { supabase } = require('./lib/supabase');
-const { authenticate } = require('./lib/auth');
-const { uploadImage, deleteImage } = require('./lib/cloudinary');
+const { supabase } = require('../lib/supabase');
+const { authenticate } = require('../lib/auth');
+const { uploadImage, deleteImage } = require('../lib/cloudinary');
 
 module.exports = async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -13,7 +13,6 @@ module.exports = async function handler(req, res) {
   if (!user) return res.status(401).json({ error: 'Yetkilendirme gerekli' });
 
   try {
-    // GET
     if (req.method === 'GET') {
       const { data: settings, error } = await supabase
         .from('settings')
@@ -41,7 +40,6 @@ module.exports = async function handler(req, res) {
       return res.json(settingsObj);
     }
 
-    // PUT
     if (req.method === 'PUT') {
       const { logo, remove_logo, ...otherSettings } = req.body;
 

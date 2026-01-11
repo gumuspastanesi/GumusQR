@@ -1,6 +1,6 @@
-const { supabase } = require('./lib/supabase');
-const { authenticate } = require('./lib/auth');
-const { uploadImage, deleteImage } = require('./lib/cloudinary');
+const { supabase } = require('../lib/supabase');
+const { authenticate } = require('../lib/auth');
+const { uploadImage, deleteImage } = require('../lib/cloudinary');
 
 module.exports = async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -15,7 +15,6 @@ module.exports = async function handler(req, res) {
   const { id, category_id } = req.query;
 
   try {
-    // GET all
     if (req.method === 'GET' && !id && !category_id) {
       const { data: products, error } = await supabase
         .from('products')
@@ -33,7 +32,6 @@ module.exports = async function handler(req, res) {
       return res.json(result);
     }
 
-    // GET by category
     if (req.method === 'GET' && category_id) {
       const { data, error } = await supabase
         .from('products')
@@ -45,7 +43,6 @@ module.exports = async function handler(req, res) {
       return res.json(data);
     }
 
-    // GET single
     if (req.method === 'GET' && id) {
       const { data, error } = await supabase
         .from('products')
@@ -57,7 +54,6 @@ module.exports = async function handler(req, res) {
       return res.json({ ...data, category_name: data.categories?.name || '' });
     }
 
-    // POST
     if (req.method === 'POST') {
       const { category_id, name, description, price, allergens, sort_order, is_active, image } = req.body;
 
@@ -97,7 +93,6 @@ module.exports = async function handler(req, res) {
       return res.status(201).json(data);
     }
 
-    // PUT
     if (req.method === 'PUT' && id) {
       const { category_id, name, description, price, allergens, sort_order, is_active, image, remove_image } = req.body;
 
@@ -141,7 +136,6 @@ module.exports = async function handler(req, res) {
       return res.json(data);
     }
 
-    // DELETE
     if (req.method === 'DELETE' && id) {
       const { data: existing } = await supabase
         .from('products')

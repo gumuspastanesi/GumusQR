@@ -1,4 +1,4 @@
-const { supabase } = require('./lib/supabase');
+const { supabase } = require('../lib/supabase');
 
 module.exports = async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -10,7 +10,6 @@ module.exports = async function handler(req, res) {
   const { type } = req.query;
 
   try {
-    // GET menu
     if (req.method === 'GET' && type === 'menu') {
       const { data: categories, error: catError } = await supabase
         .from('categories')
@@ -36,7 +35,6 @@ module.exports = async function handler(req, res) {
       return res.json(menu);
     }
 
-    // GET settings
     if (req.method === 'GET' && type === 'settings') {
       const { data: settings, error } = await supabase
         .from('settings')
