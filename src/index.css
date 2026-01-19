@@ -190,7 +190,6 @@ body {
   max-width: 800px;
   margin: 0 auto;
 }
-
 /* ========================================
    ACCORDION STYLES
    ======================================== */
@@ -212,18 +211,18 @@ body {
   align-items: center;
   justify-content: space-between;
   padding: 16px 20px;
-  background: var(--menu-brown);
+  background: #DE111A;
   border: none;
   cursor: pointer;
   transition: all 0.3s ease;
 }
 
 .menu-accordion-header:hover {
-  background: var(--menu-brown-light);
+  background: #C50F17;
 }
 
 .menu-accordion-header.expanded {
-  background: var(--menu-brown);
+  background: #DE111A;
   border-radius: var(--radius-md) var(--radius-md) 0 0;
 }
 
@@ -239,7 +238,7 @@ body {
   justify-content: center;
   width: 28px;
   height: 28px;
-  background: rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.2);
   border-radius: 50%;
   color: white;
 }

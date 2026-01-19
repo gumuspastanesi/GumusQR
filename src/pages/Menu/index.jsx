@@ -217,6 +217,7 @@ export default function MenuPage() {
         <p className="menu-footer-text">
           Ürünlerimizde alerjenler bulunabilir. Detaylı bilgi için lütfen iletişime geçiniz. Sunum ve içerikte değişiklik olabilir.
         </p>
+        <p style={{marginTop:'10px'}}>Gümüş Pasta © 2026, Tüm hakları saklıdır.</p>
       </footer>
 
       {/* Product Detail Modal */}
