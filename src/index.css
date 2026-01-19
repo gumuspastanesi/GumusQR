@@ -211,18 +211,18 @@ body {
   align-items: center;
   justify-content: space-between;
   padding: 16px 20px;
-  background: #DE111A;
+  background: #af0e0e;
   border: none;
   cursor: pointer;
   transition: all 0.3s ease;
 }
 
 .menu-accordion-header:hover {
-  background: #C50F17;
+  background: rgba(175, 14, 14, 0.9);
 }
 
 .menu-accordion-header.expanded {
-  background: #DE111A;
+  background: #af0e0e;
   border-radius: var(--radius-md) var(--radius-md) 0 0;
 }
 
