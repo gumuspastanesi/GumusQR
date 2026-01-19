@@ -1,15 +1,19 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Cake, AlertTriangle, X, ChevronDown, ChevronUp } from 'lucide-react';
+import { Cake, AlertTriangle, X, ChevronDown, ChevronUp, Instagram, Star } from 'lucide-react';
 
 const API_URL = import.meta.env.VITE_API_URL || '';
+
+// Instagram ve Google Yorumlar linkleri - bunları değiştir
+const INSTAGRAM_URL = 'https://www.instagram.com/gumuspasta?igsh=MWswanV0eTZmM2tjdg==';
+const GOOGLE_REVIEWS_URL = 'https://search.google.com/local/reviews?placeid=ChIJE1UVbE1P0xQRhG4AnShbLC0';
 
 export default function MenuPage() {
   const [menu, setMenu] = useState([]);
   const [settings, setSettings] = useState({});
   const [loading, setLoading] = useState(true);
   const [expandedCategories, setExpandedCategories] = useState({});
-  const [lightboxImage, setLightboxImage] = useState(null);
+  const [selectedProduct, setSelectedProduct] = useState(null);
 
   useEffect(() => {
     fetchData();
@@ -46,15 +50,13 @@ export default function MenuPage() {
     return `${Number(price).toFixed(0)}${currency}`;
   };
 
-  const openLightbox = (imageUrl) => {
-    if (imageUrl) {
-      setLightboxImage(imageUrl);
-      document.body.style.overflow = 'hidden';
-    }
+  const openProductDetail = (product) => {
+    setSelectedProduct(product);
+    document.body.style.overflow = 'hidden';
   };
 
-  const closeLightbox = () => {
-    setLightboxImage(null);
+  const closeProductDetail = () => {
+    setSelectedProduct(null);
     document.body.style.overflow = '';
   };
 
@@ -87,6 +89,28 @@ export default function MenuPage() {
           {settings.restaurant_description || 'Taze ve lezzetli pastalar'}
         </p>
         <div className="menu-gold-divider" />
+        
+        {/* Social Links */}
+        <div className="menu-social-links">
+          <a 
+            href={INSTAGRAM_URL} 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="menu-social-link instagram"
+          >
+            <Instagram size={18} />
+            <span>Bizi Instagram'dan takip edin</span>
+          </a>
+          <a 
+            href={GOOGLE_REVIEWS_URL} 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="menu-social-link google"
+          >
+            <Star size={18} />
+            <span>Bize Google'dan yorum yapın</span>
+          </a>
+        </div>
       </header>
 
       {/* Main Content - Accordion Categories */}
@@ -107,7 +131,7 @@ export default function MenuPage() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: categoryIndex * 0.05 }}
               >
-                {/* Accordion Header */}
+                {/* Accordion Header - Ürün sayısı kaldırıldı */}
                 <button
                   className={`menu-accordion-header ${expandedCategories[category.id] ? 'expanded' : ''}`}
                   onClick={() => toggleCategory(category.id)}
@@ -122,9 +146,6 @@ export default function MenuPage() {
                     </span>
                     <span className="menu-accordion-title">{category.name}</span>
                   </div>
-                  <span className="menu-accordion-count">
-                    {category.products.length} ürün
-                  </span>
                 </button>
 
                 {/* Accordion Content */}
@@ -145,12 +166,10 @@ export default function MenuPage() {
                             initial={{ opacity: 0, scale: 0.95 }}
                             animate={{ opacity: 1, scale: 1 }}
                             transition={{ delay: productIndex * 0.05 }}
+                            onClick={() => openProductDetail(product)}
                           >
                             {/* Product Image */}
-                            <div 
-                              className="menu-product-image-container"
-                              onClick={() => openLightbox(product.image_url)}
-                            >
+                            <div className="menu-product-image-container">
                               {product.image_url ? (
                                 <img
                                   src={product.image_url}
@@ -177,13 +196,6 @@ export default function MenuPage() {
                                 </p>
                               )}
                               
-                              {product.allergens && (
-                                <div className="menu-product-allergens">
-                                  <AlertTriangle size={12} />
-                                  <span>{product.allergens}</span>
-                                </div>
-                              )}
-                              
                               <div className="menu-product-price">
                                 {formatPrice(product.price)}
                               </div>
@@ -200,35 +212,70 @@ export default function MenuPage() {
         )}
       </main>
 
-      {/* Footer */}
+      {/* Footer - Alerjen Uyarısı */}
       <footer className="menu-footer">
         <p className="menu-footer-text">
-          {settings.restaurant_name || 'Gümüş Pastanesi'} • Afiyet Olsun
+          Ürünlerimizde alerjenler bulunabilir. Detaylı bilgi için lütfen iletişime geçiniz. Sunum ve içerikte değişiklik olabilir.
         </p>
       </footer>
 
-      {/* Lightbox */}
+      {/* Product Detail Modal */}
       <AnimatePresence>
-        {lightboxImage && (
+        {selectedProduct && (
           <motion.div
-            className="lightbox-overlay"
+            className="product-modal-overlay"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            onClick={closeLightbox}
+            onClick={closeProductDetail}
           >
-            <button className="lightbox-close" onClick={closeLightbox}>
-              <X size={24} />
-            </button>
-            <motion.img
-              src={lightboxImage}
-              alt="Enlarged"
-              className="lightbox-image"
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
+            <motion.div
+              className="product-modal"
+              initial={{ scale: 0.9, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.9, opacity: 0, y: 20 }}
               onClick={(e) => e.stopPropagation()}
-            />
+            >
+              <button className="product-modal-close" onClick={closeProductDetail}>
+                <X size={24} />
+              </button>
+              
+              {/* Product Image */}
+              {selectedProduct.image_url && (
+                <div className="product-modal-image-container">
+                  <img
+                    src={selectedProduct.image_url}
+                    alt={selectedProduct.name}
+                    className="product-modal-image"
+                  />
+                </div>
+              )}
+              
+              {/* Product Details */}
+              <div className="product-modal-content">
+                <h2 className="product-modal-name">{selectedProduct.name}</h2>
+                
+                <div className="product-modal-price">
+                  {formatPrice(selectedProduct.price)}
+                </div>
+                
+                {selectedProduct.description && (
+                  <p className="product-modal-description">
+                    {selectedProduct.description}
+                  </p>
+                )}
+                
+                {selectedProduct.allergens && (
+                  <div className="product-modal-allergens">
+                    <AlertTriangle size={16} />
+                    <div>
+                      <strong>Alerjenler:</strong>
+                      <span>{selectedProduct.allergens}</span>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
